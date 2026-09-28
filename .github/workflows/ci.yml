@@ -29,13 +29,14 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8
+          flake8 src/ api/ scripts/ tests/
 
       - name: Run Unit & Integration Tests
         env:
           PYTHONPATH: .
+          MLFLOW_ALLOW_FILE_STORE: "true"
         run: |
-          python -m pytest tests/ -v
+          python -m pytest tests/ -v -p no:cov -p no:langsmith
 
       - name: Build Docker Container Image (Validation)
         run: |
