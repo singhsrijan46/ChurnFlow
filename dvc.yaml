@@ -1,0 +1,65 @@
+stages:
+  ingest:
+    cmd: python scripts/download_data.py
+    deps:
+      - scripts/download_data.py
+      - src/churn_ml/data/ingestion.py
+    outs:
+      - data/raw/telco_churn_raw.csv:
+          cache: false
+      - data/processed/train.csv:
+          cache: false
+      - data/processed/test.csv:
+          cache: false
+      - data/processed/reference.csv:
+          cache: false
+      - data/processed/current.csv:
+          cache: false
+
+  validate:
+    cmd: python scripts/validate_data.py --file-path data/raw/telco_churn_raw.csv
+    deps:
+      - scripts/validate_data.py
+      - src/churn_ml/data/validation.py
+      - data/raw/telco_churn_raw.csv
+
+  train:
+    cmd: python scripts/train_model.py --model-type all --register
+    deps:
+      - scripts/train_model.py
+      - src/churn_ml/training/train.py
+      - src/churn_ml/features/preprocessing.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+    outs:
+      - models/model_pipeline.joblib:
+          cache: false
+      - models/model_metadata.json:
+          cache: false
+
+  evaluate:
+    cmd: python scripts/evaluate_model.py --model-path models/model_pipeline.joblib --test-data data/processed/test.csv --artifact-dir reports/evaluation
+    deps:
+      - scripts/evaluate_model.py
+      - src/churn_ml/training/evaluate.py
+      - models/model_pipeline.joblib
+      - data/processed/test.csv
+    metrics:
+      - reports/evaluation/evaluation_metrics.json:
+          cache: false
+    plots:
+      - reports/evaluation/confusion_matrix.png:
+          cache: false
+      - reports/evaluation/roc_curve.png:
+          cache: false
+
+  drift_check:
+    cmd: python scripts/check_drift.py --reference data/processed/reference.csv --current data/processed/current.csv --report-html reports/data_drift_report.html
+    deps:
+      - scripts/check_drift.py
+      - src/churn_ml/monitoring/drift.py
+      - data/processed/reference.csv
+      - data/processed/current.csv
+    outs:
+      - reports/data_drift_report.html:
+          cache: false
