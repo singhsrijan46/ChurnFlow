@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: churnflow
+  labels:
+    app.kubernetes.io/name: churnflow
+    app.kubernetes.io/part-of: churnflow-platform

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: churnflow-api-service
+  namespace: churnflow
+  labels:
+    app: churnflow-api
+spec:
+  type: ClusterIP
+  selector:
+    app: churnflow-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+      name: http
