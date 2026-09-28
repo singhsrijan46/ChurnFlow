@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -29,14 +28,14 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 src/ api/ scripts/ tests/
+          flake8 --config=.flake8 src/ api/ scripts/ tests/
 
       - name: Run Unit & Integration Tests
         env:
-          PYTHONPATH: .
+          PYTHONPATH: .:src
           MLFLOW_ALLOW_FILE_STORE: "true"
         run: |
-          python -m pytest tests/ -v -p no:cov -p no:langsmith
+          python -m pytest tests/ -v
 
       - name: Build Docker Container Image (Validation)
         run: |

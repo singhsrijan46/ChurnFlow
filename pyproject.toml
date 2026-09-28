@@ -33,14 +33,15 @@ dev = [
     "isort>=5.12.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["churn_ml", "api", "api.routes"]
+package-dir = {"churn_ml" = "src/churn_ml", "api" = "api", "api.routes" = "api/routes"}
 
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -v"
 testpaths = ["tests"]
-pythonpath = ["src", "."]
+pythonpath = [".", "src"]
 
 [tool.black]
 line-length = 100

@@ -36,15 +36,15 @@ RUN groupadd -g 1001 appgroup && \
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/app/src
 ENV PYTHONUNBUFFERED=1
 
 # Copy application source code and configs
-COPY src/ /app/src/
-COPY api/ /app/api/
-COPY configs/ /app/configs/
-COPY models/ /app/models/
-COPY data/ /app/data/
+COPY src /app/src
+COPY api /app/api
+COPY configs /app/configs
+COPY models /app/models
+COPY data /app/data
 
 RUN chown -R appuser:appgroup /app
 USER appuser
