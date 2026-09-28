@@ -1,0 +1,61 @@
+name: CD Pipeline - Deploy to AWS EKS
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: churn-api
+  EKS_CLUSTER_NAME: churnflow-cluster
+
+jobs:
+  build-and-deploy:
+    name: Build Immutable Image & Deploy
+    runs-on: ubuntu-latest
+    # Only run cloud deployment if AWS credentials are configured in GitHub repository secrets
+    if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push Immutable Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update Kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Deploy to Kubernetes (EKS)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl set image deployment/churnflow-api api=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -n churnflow
+          kubectl rollout status deployment/churnflow-api -n churnflow --timeout=120s

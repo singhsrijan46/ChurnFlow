@@ -1,0 +1,56 @@
+name: Automated Retraining & Model Governance
+
+on:
+  schedule:
+    # Run weekly on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      force_retrain:
+        description: 'Force model retraining regardless of drift status'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  retrain-evaluate-promote:
+    name: Detect Drift, Retrain & Validate Model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Execute Automated Retraining Pipeline
+        env:
+          PYTHONPATH: .
+          DRIFT_THRESHOLD: "0.20"
+          MIN_AUC: "0.80"
+          MIN_F1: "0.55"
+        run: |
+          if [ "${{ github.event.inputs.force_retrain }}" = "true" ]; then
+            python scripts/retrain_pipeline.py --force
+          else
+            python scripts/retrain_pipeline.py
+          fi
+
+      - name: Upload Drift & Evaluation Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlops-retraining-reports
+          path: |
+            reports/
+            models/model_metadata.json
