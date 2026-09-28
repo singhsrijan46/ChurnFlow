@@ -1,0 +1,141 @@
+version: "3.8"
+
+services:
+  # ==========================================
+  # PostgreSQL Database for MLflow Backend Store
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: churnflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-mlflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - churnflow-network
+
+  # ==========================================
+  # MLflow Tracking Server & Model Registry
+  # ==========================================
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.0
+    container_name: churnflow-mlflow
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      - BACKEND_STORE_URI=postgresql://postgres:postgres@postgres:5432/mlflow
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://postgres:postgres@postgres:5432/mlflow
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - churnflow-network
+
+  # ==========================================
+  # Customer Churn FastAPI Inference Service
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: churnflow-api
+    restart: always
+    depends_on:
+      mlflow:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=ChurnFlow
+      - APP_ENV=production
+      - LOG_LEVEL=INFO
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_NAME=churn_prediction_model
+      - MODEL_VERSION=1.0.0
+      - DRIFT_THRESHOLD=0.20
+      - MIN_AUC=0.80
+      - MIN_F1=0.55
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - churnflow-network
+
+  # ==========================================
+  # Prometheus Metrics Collector
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: churnflow-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    networks:
+      - churnflow-network
+
+  # ==========================================
+  # Grafana Dashboard UI
+  # ==========================================
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: churnflow-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - churnflow-network
+
+networks:
+  churnflow-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mlflow_artifacts:
+  prometheus_data:
+  grafana_data:
