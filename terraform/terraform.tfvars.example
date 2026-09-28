@@ -1,0 +1,5 @@
+aws_region          = "us-east-1"
+environment         = "prod"
+project_name        = "churnflow"
+ecr_repository_name = "churn-api"
+s3_bucket_name      = "churnflow-mlops-artifacts-prod-12345"
