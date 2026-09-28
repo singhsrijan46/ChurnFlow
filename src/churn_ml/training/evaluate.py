@@ -2,6 +2,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import json
+import matplotlib
+matplotlib.use("Agg")  # Non-interactive backend for headless CI/CD & server environments
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
