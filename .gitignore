@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets
+.env
+*.env
+!.env.example
+*.pem
+*.key
+secret.yaml
+!secret.yaml.example
+terraform.tfvars
+!terraform.tfvars.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MLflow & Local Stores
+mlruns/
+mlartifacts/
+*.db
+*.sqlite
+*.sqlite3
+
+# DVC & Data Cache
+.dvc/cache/
+.dvc/tmp/
+
+# Model Artifacts (serialized locally)
+models/*.pkl
+models/*.joblib
+models/*.json
+!models/.gitkeep
+
+# Data (Raw large data)
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# OS
+.DS_Store
+Thumbs.db

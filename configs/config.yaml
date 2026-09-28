@@ -1,0 +1,106 @@
+app:
+  name: "ChurnFlow"
+  version: "1.0.0"
+  environment: "development"
+
+data:
+  raw_data_url: "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv"
+  raw_data_path: "data/raw/telco_churn_raw.csv"
+  processed_train_path: "data/processed/train.csv"
+  processed_test_path: "data/processed/test.csv"
+  reference_data_path: "data/processed/reference.csv"
+  current_data_path: "data/processed/current.csv"
+  target_column: "Churn"
+  id_column: "customerID"
+  test_size: 0.20
+  random_state: 42
+
+features:
+  numerical_features:
+    - "tenure"
+    - "MonthlyCharges"
+    - "TotalCharges"
+  categorical_features:
+    - "gender"
+    - "SeniorCitizen"
+    - "Partner"
+    - "Dependents"
+    - "PhoneService"
+    - "MultipleLines"
+    - "InternetService"
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+    - "Contract"
+    - "PaperlessBilling"
+    - "PaymentMethod"
+
+validation:
+  critical_columns:
+    - "customerID"
+    - "gender"
+    - "SeniorCitizen"
+    - "Partner"
+    - "Dependents"
+    - "tenure"
+    - "PhoneService"
+    - "MultipleLines"
+    - "InternetService"
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+    - "Contract"
+    - "PaperlessBilling"
+    - "PaymentMethod"
+    - "MonthlyCharges"
+    - "TotalCharges"
+    - "Churn"
+  tenure_min: 0
+  tenure_max: 120
+  monthly_charges_min: 0.0
+  monthly_charges_max: 500.0
+  total_charges_min: 0.0
+  total_charges_max: 50000.0
+
+models:
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    solver: "lbfgs"
+    random_state: 42
+  xgboost:
+    n_estimators: 150
+    learning_rate: 0.05
+    max_depth: 4
+    subsample: 0.8
+    colsample_bytree: 0.8
+    random_state: 42
+    eval_metric: "logloss"
+
+registry:
+  model_name: "churn_prediction_model"
+  min_auc: 0.80
+  min_f1: 0.55
+  promotion_metric: "roc_auc"
+
+monitoring:
+  drift_share_threshold: 0.20
+  feature_drift_p_value: 0.05
+  monitored_features:
+    - "tenure"
+    - "MonthlyCharges"
+    - "TotalCharges"
+    - "Contract"
+    - "InternetService"
+    - "PaymentMethod"
+
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "customer-churn-prediction"
+  local_artifact_dir: "models"
