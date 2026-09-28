@@ -63,6 +63,8 @@ mlartifacts/
 models/*.pkl
 models/*.joblib
 models/*.json
+models/run_*/
+reports/
 !models/.gitkeep
 
 # Data (Raw large data)
