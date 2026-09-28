@@ -1,0 +1,156 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "API Telemetry & Latency",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "title": "Request Throughput",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(churn_http_requests_total[1m])) by (endpoint, status_code)",
+          "legendFormat": "{{endpoint}} ({{status_code}})"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "title": "P95 Request Latency",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(churn_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "P95 {{endpoint}}"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "title": "API Errors (5xx / Exceptions)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(churn_prediction_errors_total[1h])) or vector(0)",
+          "legendFormat": "Errors"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "id": 200,
+      "title": "ML Model Performance & Drift Monitoring",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 9 },
+      "id": 4,
+      "title": "Churn Predictions (0=Retained, 1=Churn)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(churn_predictions_total[5m])) by (prediction, model_version)",
+          "legendFormat": "Pred {{prediction}} (v{{model_version}})"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.15 },
+              { "color": "red", "value": 0.20 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 9 },
+      "id": 5,
+      "title": "Data Drift Score (Evidently / KS)",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "churn_dataset_drift_score",
+          "legendFormat": "Drift Share"
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "0": { "color": "green", "text": "HEALTHY (No Drift)" }, "1": { "color": "red", "text": "DRIFT DETECTED" } }, "type": "value" }
+          ]
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 9 },
+      "id": 6,
+      "title": "Drift Alert Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "churn_dataset_drift_detected",
+          "legendFormat": "Status"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["mlops", "churn", "monitoring"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "ChurnFlow - MLOps Production Dashboard",
+  "uid": "churnflow-mlops-dash",
+  "version": 1
+}
