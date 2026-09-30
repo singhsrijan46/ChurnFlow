@@ -1,16 +1,15 @@
-# Core Machine Learning & Data Processing
-pandas>=2.2.0
-numpy>=1.26.0
-scikit-learn>=1.4.0
+# Core Machine Learning, Scientific & Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
 xgboost>=2.0.0
 joblib>=1.3.0
+matplotlib>=3.8.0
 pyyaml>=6.0.1
 
 # Experiment Tracking & MLOps
 mlflow>=2.11.0
-dvc>=3.48.0
-great-expectations>=0.18.0
-evidently>=0.4.15
 
 # API & Web Framework
 fastapi>=0.110.0

@@ -35,7 +35,7 @@ jobs:
 
       - name: Execute Automated Retraining Pipeline
         env:
-          PYTHONPATH: .
+          PYTHONPATH: .:src
           DRIFT_THRESHOLD: "0.20"
           MIN_AUC: "0.80"
           MIN_F1: "0.55"

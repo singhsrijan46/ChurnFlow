@@ -46,7 +46,7 @@ COPY configs /app/configs
 COPY models /app/models
 COPY data /app/data
 
-RUN chown -R appuser:appgroup /app
+RUN mkdir -p /app/reports /app/models && chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8000
